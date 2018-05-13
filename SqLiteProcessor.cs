@@ -82,6 +82,19 @@ namespace SqlLiteToCsv
                     Console.WriteLine($"{String.Format("{0:n0}", countPerSec)} records/s");
                     Console.WriteLine($"~{String.Format("{0:n0}", estimatedBytesSize)} bytes");
                 }
+
+                if(estimatedBytesSize >= (1000*1000*500)) //500MB
+                {
+                    string[] lines = new string[sanitizedData.Count];
+                    for(int i = 0; i < sanitizedData.Count; i++)
+                    {
+                        lines[i] = String.Join(',', sanitizedData[i]);
+                    }
+
+                    FileUtilities.AppendToFile(path, $"{tableName}.csv", lines);
+                    sanitizedData.Clear();
+                    estimatedBytesSize = 0;
+                }
             }
 
         }
