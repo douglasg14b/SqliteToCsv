@@ -14,9 +14,9 @@ namespace SqlLiteToCsv
             string source = @"Z:\HDD\12-17-2017\forums.db.old";
             //string source = @"C:\Temp\forums.db";
 
-            using (SqLiteProcessor processor = new SqLiteProcessor(source))
+            using (SqLiteProcessor processor = new SqLiteProcessor(source, @"Z:\HDD\12-17-2017\DbExport\"))
             {
-                processor.ExportTable("Posts", @"Z:\HDD\12-17-2017\DbExport\");
+                processor.ProcessTables();
             }
 
 

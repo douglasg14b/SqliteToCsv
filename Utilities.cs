@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SqlLiteToCsv
 {
-    public static class FileUtilities
+    public static class Utilities
     {
         public static void AppendToFile(string path, string fileName, string[] data)
         {
