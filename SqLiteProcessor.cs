@@ -47,9 +47,7 @@ namespace SqlLiteToCsv
                 }
 
                 Tables.Add(newTable);
-            }
-
-            
+            }  
         }
 
         public void ProcessTables()
@@ -118,7 +116,7 @@ namespace SqlLiteToCsv
         {
             for (int i = 0; i < data.Count; i++)
             {
-                writer.WriteLine(String.Join(',', data[i]));
+                writer.WriteLine(String.Join(",", data[i]));
             }
 
             data.Clear();
@@ -171,7 +169,7 @@ namespace SqlLiteToCsv
                     string[] lines = new string[sanitizedData.Count];
                     for(int i = 0; i < sanitizedData.Count; i++)
                     {
-                        lines[i] = String.Join(',', sanitizedData[i]);
+                        lines[i] = String.Join(",", sanitizedData[i]);
                     }
 
                     Utilities.AppendToFile(path, $"{tableName}.csv", lines);
