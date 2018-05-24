@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,9 +62,19 @@ namespace SqliteToCsv
             {
                 _currentTableName = table.Name;
 
+                _stream = new FileStream(Path.Combine(_outputPath, $"{_currentTableName}.csv"), FileMode.Create);
+                _writer = new StreamWriter(_stream, Encoding.Unicode, 1024 * 1024 * 8);
+
                 await InitilizeTasks();
                 await StartTasks();
                 await WaitOnTasks();
+
+                await _writer.FlushAsync();
+                await _stream.FlushAsync();
+                _writer.Dispose();
+                _stream.Dispose();
+                _stream = null;
+                _writer = null;
 
                 ClearTasks();
             }
@@ -87,13 +98,6 @@ namespace SqliteToCsv
             workersActive = false;
 
             Task.WaitAll(writers);
-
-            await _writer.FlushAsync();
-            await _stream.FlushAsync();
-            _writer.Dispose();
-            _stream.Dispose();
-            _stream = null;
-            _writer = null;
         }
 
         private async Task ClearTasks()
@@ -148,6 +152,9 @@ namespace SqliteToCsv
             long totalExtracted = 0;
 
             stopwatch.Start();
+            object[] columns = _tables.Where(x => x.Name == _currentTableName).Single().Columns.Select(x => (object)x).ToArray();
+            ProcessingQueue.Add(columns);
+
             while (reader.Read())
             {
                 /*if(ProcessingQueue.Count >= ParallelConfig.MaxProcessingQueue)
@@ -161,7 +168,7 @@ namespace SqliteToCsv
 
                 taskState.Status = State.Running;
 
-                object[] rowValues = new object[reader.FieldCount - 1];
+                object[] rowValues = new object[reader.FieldCount];
                 reader.GetValues(rowValues);
                 ProcessingQueue.Add(rowValues);
 
@@ -201,8 +208,6 @@ namespace SqliteToCsv
         private async Task DoWritingWork(object state)
         {
             TaskState taskState = (TaskState)state;
-            _stream = new FileStream(Path.Combine(_outputPath, $"{_currentTableName}.csv"), FileMode.Create);
-            _writer = new StreamWriter(_stream, Encoding.Unicode, 1024 * 1024 * 8);
 
             while (workersActive || WritingQueue.Count > 0)
             {
