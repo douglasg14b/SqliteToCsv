@@ -23,8 +23,11 @@ namespace SqlLiteToCsv
                 Console.WriteLine("Invalid Arguments");
                 return;
             }
-
-            if(args.Length == 0)
+            else if(args.Length == 2)
+            {
+                validArgs = ValidateArgs(args[0], args[1]);
+            }
+            else if(args.Length == 0)
             {
                 source = GetSourceFromUser();
                 destination = GetDestinationFromUser();
@@ -54,6 +57,22 @@ namespace SqlLiteToCsv
             //}
 
 
+        }
+
+        private static bool ValidateArgs(string source, string destination)
+        {
+            if (!File.Exists(source))
+            {
+                WriteLineColor("Source File Not Found", ConsoleColor.Red);
+                return false;
+            }
+
+            if (!Directory.Exists(destination))
+            {
+                WriteLineColor("Destination Directory Not Found", ConsoleColor.Red);
+                return false;
+            }
+            return true;
         }
 
         private static string GetSourceFromUser()
