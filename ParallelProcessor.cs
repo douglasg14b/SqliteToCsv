@@ -1,4 +1,4 @@
-﻿using SqlLiteToCsv;
+﻿using SqliteToCsv.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -22,7 +22,7 @@ namespace SqliteToCsv
         private string _outputPath;
         private List<Table> _tables;
 
-        private string _currentTableName = "";
+        private Table _currentTable;
 
         public ParallelProcessor(string dbPath, string outputPath)
         {
@@ -55,14 +55,16 @@ namespace SqliteToCsv
         public BlockingCollection<object[]> ProcessingQueue { get; private set; }
         public BlockingCollection<string> WritingQueue { get; private set; }
 
+        public List<Table> Tables { get => _tables; }
+
         public async Task Start()
         {
             Active = true;
             foreach (Table table in _tables)
             {
-                _currentTableName = table.Name;
+                _currentTable = table;
 
-                _stream = new FileStream(Path.Combine(_outputPath, $"{_currentTableName}.csv"), FileMode.Create);
+                _stream = new FileStream(Path.Combine(_outputPath, $"{_currentTable.Name}.csv"), FileMode.Create);
                 _writer = new StreamWriter(_stream, Encoding.Unicode, 1024 * 1024 * 8);
 
                 await InitilizeTasks();
@@ -144,7 +146,7 @@ namespace SqliteToCsv
 
         private async Task DoExtractionWork(object state)
         {
-            SQLiteCommand query = new SQLiteCommand($"Select * FROM {_currentTableName} ", _connection);
+            SQLiteCommand query = new SQLiteCommand($"Select * FROM {_currentTable.Name} ", _connection);
             SQLiteDataReader reader = query.ExecuteReader(CommandBehavior.SequentialAccess);
             TaskState taskState = (TaskState)state;
 
@@ -152,7 +154,7 @@ namespace SqliteToCsv
             long totalExtracted = 0;
 
             stopwatch.Start();
-            object[] columns = _tables.Where(x => x.Name == _currentTableName).Single().Columns.Select(x => (object)x).ToArray();
+            object[] columns = _tables.Where(x => x.Name == _currentTable.Name).Single().Columns.Select(x => (object)x).ToArray();
             ProcessingQueue.Add(columns);
 
             while (reader.Read())
@@ -171,21 +173,23 @@ namespace SqliteToCsv
                 object[] rowValues = new object[reader.FieldCount];
                 reader.GetValues(rowValues);
                 ProcessingQueue.Add(rowValues);
+                _currentTable.Extracted.Incriment();
 
                 totalExtracted++;
                 if(stopwatch.ElapsedMilliseconds % 500 == 0)
                 {
-                    Console.WriteLine($"Queue size: {ProcessingQueue.Count}. Writing Queue: {WritingQueue.Count} Speed: {(float)totalExtracted / ((float)stopwatch.ElapsedMilliseconds / 1000) } items/s");
+                    //Console.WriteLine($"Queue size: {ProcessingQueue.Count}. Writing Queue: {WritingQueue.Count} Speed: {(float)totalExtracted / ((float)stopwatch.ElapsedMilliseconds / 1000) } items/s");
                 }
             }
 
-            Console.WriteLine($"Extraction complete. {totalExtracted} records");
+            //Console.WriteLine($"Extraction complete. {totalExtracted} records");
         }
 
         private async Task DoProcessingnWork(object state)
         {
             TaskState taskState = (TaskState)state;
-
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             while (extractorsActive || ProcessingQueue.Count > 0)
             {
                 /*if(WritingQueue.Count >= ParallelConfig.MaxWritingQueue || ProcessingQueue.Count == 0)
@@ -200,9 +204,13 @@ namespace SqliteToCsv
                 {
                     continue;
                 }
+                
                 string sanitized = String.Join(",", Utilities.SanitizeRowOfStrings2(data));
+                
                 WritingQueue.Add(sanitized);
+                _currentTable.Processed.Incriment(stopwatch.ElapsedMilliseconds, true);
             }
+            stopwatch.Stop();
         }
 
         private async Task DoWritingWork(object state)
@@ -227,7 +235,7 @@ namespace SqliteToCsv
                 }
 
                 _writer.WriteLine(toWrite);
-                int test = 99;
+                _currentTable.Written.Incriment();
             }
         }
 

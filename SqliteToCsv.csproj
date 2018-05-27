@@ -17,4 +17,10 @@
     <PackageReference Include="System.Data.SQLite.Linq" Version="1.0.108" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="BetterConsoleTables">
+      <HintPath>..\..\..\Programming\BetterConsoleTables\src\BetterConsoleTables\bin\Release\netstandard1.6\BetterConsoleTables.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

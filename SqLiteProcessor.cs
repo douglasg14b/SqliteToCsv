@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SqliteToCsv.Models;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
@@ -8,7 +9,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SqlLiteToCsv
+namespace SqliteToCsv
 {
     public class SqLiteProcessor : IDisposable
     {

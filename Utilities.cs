@@ -1,11 +1,12 @@
-﻿using System;
+﻿using SqliteToCsv.Models;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.IO;
 using System.Text;
 
-namespace SqlLiteToCsv
+namespace SqliteToCsv
 {
     public static class Utilities
     {

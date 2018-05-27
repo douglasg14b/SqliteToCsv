@@ -8,12 +8,19 @@ using System.Threading.Tasks;
 using SqliteToCsv;
 using System.IO;
 
-namespace SqlLiteToCsv
+namespace SqliteToCsv
 {
     class Program
     {
         static void Main(string[] args)
         {
+#if DEBUG
+            args = new string[2]
+            {
+                @"C:\Temp\forums.db",
+                @"C:\Temp\output"
+            };
+#endif
             string source = String.Empty;
             string destination = String.Empty;
             bool validArgs = false;
@@ -26,6 +33,11 @@ namespace SqlLiteToCsv
             else if(args.Length == 2)
             {
                 validArgs = ValidateArgs(args[0], args[1]);
+                if (validArgs)
+                {
+                    source = args[0];
+                    destination = args[1];
+                }
             }
             else if(args.Length == 0)
             {
@@ -34,12 +46,10 @@ namespace SqlLiteToCsv
                 validArgs = true;
             }
 
-            //string source = @"Z:\HDD\12-17-2017\forums.db.old";
-            //string source = @"C:\Temp\forums.db";
-            //destination = @"Z:\HDD\12-17-2017\DbExport\"
             if (validArgs)
             {
                 using (ParallelProcessor processor = new ParallelProcessor(source, destination))
+                using (ConsoleStats stats = new ConsoleStats(processor))
                 {
                     Task.Run(async () =>
                     {
@@ -48,15 +58,9 @@ namespace SqlLiteToCsv
                     Console.ReadLine();
                 }
             }
-
-
-
-            //using (SqLiteProcessor processor = new SqLiteProcessor(source, @"Z:\HDD\12-17-2017\DbExport\"))
-            //{
-            //    processor.ProcessTables();
-            //}
-
-
+#if DEBUG
+            Console.ReadLine();
+#endif
         }
 
         private static bool ValidateArgs(string source, string destination)
