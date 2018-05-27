@@ -150,39 +150,19 @@ namespace SqliteToCsv
             SQLiteDataReader reader = query.ExecuteReader(CommandBehavior.SequentialAccess);
             TaskState taskState = (TaskState)state;
 
-            Stopwatch stopwatch = new Stopwatch();
-            long totalExtracted = 0;
-
-            stopwatch.Start();
             object[] columns = _tables.Where(x => x.Name == _currentTable.Name).Single().Columns.Select(x => (object)x).ToArray();
             ProcessingQueue.Add(columns);
 
             while (reader.Read())
             {
-                /*if(ProcessingQueue.Count >= ParallelConfig.MaxProcessingQueue)
-                {
-                    while (ProcessingQueue.Count >= ParallelConfig.MaxProcessingQueue)
-                    {
-                        taskState.Status = State.Paused;
-                        await Task.Delay(500);
-                    }
-                }*/
-
                 taskState.Status = State.Running;
 
                 object[] rowValues = new object[reader.FieldCount];
                 reader.GetValues(rowValues);
                 ProcessingQueue.Add(rowValues);
                 _currentTable.Extracted.Incriment();
-
-                totalExtracted++;
-                if(stopwatch.ElapsedMilliseconds % 500 == 0)
-                {
-                    //Console.WriteLine($"Queue size: {ProcessingQueue.Count}. Writing Queue: {WritingQueue.Count} Speed: {(float)totalExtracted / ((float)stopwatch.ElapsedMilliseconds / 1000) } items/s");
-                }
             }
 
-            //Console.WriteLine($"Extraction complete. {totalExtracted} records");
         }
 
         private async Task DoProcessingnWork(object state)
@@ -192,11 +172,6 @@ namespace SqliteToCsv
             stopwatch.Start();
             while (extractorsActive || ProcessingQueue.Count > 0)
             {
-                /*if(WritingQueue.Count >= ParallelConfig.MaxWritingQueue || ProcessingQueue.Count == 0)
-                {
-                    taskState.Status = State.Paused;
-                    await Task.Delay(500);
-                }*/
                 taskState.Status = State.Running;
 
                 object[] data;
@@ -219,13 +194,6 @@ namespace SqliteToCsv
 
             while (workersActive || WritingQueue.Count > 0)
             {
-                /*if(WritingQueue.Count == 0)
-                {
-                    taskState.Status = State.Paused;
-                    await Task.Delay(500);
-                    continue;
-                }*/
-
                 taskState.Status = State.Running;
 
                 string toWrite;
