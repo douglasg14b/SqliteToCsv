@@ -43,7 +43,7 @@ namespace SqliteToCsv
 
         public static string SanitizeString(string input)
         {
-            int capacity = input.Length + (int)(input.Length * 0.1f); //Input length + 10%
+            int capacity = input.Length + (int)(input.Length * 0.1f); //Input length + 10%, probably unecessary for short strings....
             StringBuilder builder = new StringBuilder(capacity);
 
             builder.Append('"');
