@@ -55,9 +55,9 @@ namespace SqliteToCsv
                     {
                         await processor.Start();
                     }).GetAwaiter().GetResult();
-                    Console.ReadLine();
                 }
             }
+            Console.WriteLine("Completed Sqlite processing");
 #if DEBUG
             Console.ReadLine();
 #endif
